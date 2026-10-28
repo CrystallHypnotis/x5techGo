@@ -1,107 +1,147 @@
-package lesson2
+package homework
 
-// FizzBuzz возвращает FizzBuzz, Fizz, Buzz или пустую строку для обычного числа.
-// Для n <= 0 возвращает invalid.
-func FizzBuzz(n int) string {
-	// TODO: Реализовать через switch без выражения.
-	// 2. `FizzBuzz`: для положительного числа, кратного 15, верните `FizzBuzz`,
-	// иначе для кратного 3: `Fizz`, кратного 5: `Buzz`. Для прочих положительных чисел верните пустую строку `""`,
-	// для нуля и отрицательных: `invalid`. Проверка: `go test -run TestFizzBuzz -v`.
-	switch {
-	case n == 0:
-		return "invalid"
-	case n%15 == 0:
-		return "FizzBuzz"
-	case n%3 == 0:
-		return "Fizz"
-	case n%5 == 0:
-		return "Buzz"
-	case n > 0:
+import "strings"
+
+// PairInput соответствует объекту nums/target из условия контеста.
+type PairInput struct {
+	Nums   []int
+	Target int
+}
+
+// longestPrefix возвращает самый длинный общий префикс строк.
+func longestPrefix(words []string) string {
+	// TODO: реализовать поиск префикса по кодовым точкам Unicode.
+	if len(words) == 0 {
 		return ""
-	default:
-		return "invalid"
 	}
-}
+	sortedWords := make([]string, len(words))
+	copy(sortedWords, words)
+	stack := make([][2]int, 1, len(sortedWords))
+	stack[0] = [2]int{0, len(sortedWords) - 1}
 
-// Sum возвращает сумму. Для пустого среза и nil возвращает 0.
-func Sum(values []int64) int64 {
-	// TODO: Пройти по значениям циклом.
-	if (len(values) == 0) || (values == nil) {
-		return 0
-	}
-	var sum int64 = 0
-	for _, value := range values {
-		sum += value
-	}
-	return sum
-}
+	for len(stack) != 0 {
+		last_idx := len(stack) - 1
+		borders := stack[last_idx]
+		stack = stack[:last_idx]
 
-// Min возвращает минимум. Для пустого среза и nil возвращает 0 по условию задачи.
-func Min(values []int64) int64 {
-	// TODO: Учесть пустой ввод, затем сравнить элементы.
-	if (len(values) == 0) || (values == nil) {
-		return 0
-	}
-	var min int64 = values[0]
-	for _, value := range values {
-		if value < min {
-			min = value
+		pivot_idx := (borders[1] + borders[0]) / 2
+		pivot := sortedWords[pivot_idx]
+
+		i, j := borders[0], borders[1]
+		for i <= j {
+			for sortedWords[i] < pivot {
+				i += 1
+			}
+			for sortedWords[j] > pivot {
+				j -= 1
+			}
+			if i <= j {
+				sortedWords[i], sortedWords[j] = sortedWords[j], sortedWords[i]
+				i += 1
+				j -= 1
+			}
+		}
+
+		if borders[0] < j {
+			stack = append(stack, [2]int{borders[0], j})
+		}
+
+		if borders[1] > i {
+			stack = append(stack, [2]int{i, borders[1]})
 		}
 	}
-	return min
+
+	s1 := []rune(sortedWords[0])
+	s2 := []rune(sortedWords[len(sortedWords)-1])
+
+	min_len := min(len(s1), len(s2))
+	idx := 0
+	for idx < min_len && s1[idx] == s2[idx] {
+		idx++
+	}
+
+	return string(s1[:idx])
 }
 
-// Max возвращает максимум. Для пустого среза и nil возвращает 0 по условию задачи.
-func Max(values []int64) int64 {
-	// TODO: Учесть пустой ввод, затем сравнить элементы.
-	if (len(values) == 0) || (values == nil) {
-		return 0
+// pairIndices возвращает индексы двух разных элементов по возрастанию.
+func pairIndices(input PairInput) [2]int {
+	// TODO: найти единственную пару с суммой input.Target.
+	m := make(map[int]int) //[требуемое дополнение]индекс в nums
+
+	for idx, num := range input.Nums {
+		m[input.Target-num] = idx
 	}
-	var max int64 = values[0]
-	for _, value := range values {
-		if value > max {
-			max = value
+
+	for ind, num := range input.Nums {
+		idx, ok := m[num]
+		if ok == true && ind != idx {
+			return [2]int{ind, idx}
 		}
 	}
-	return max
+
+	return [2]int{}
 }
 
-// Average возвращает среднее как float64. Для пустого среза и nil возвращает 0.
-func Average(values []int64) float64 {
-	// TODO: Выполнить преобразования до деления.
-	if (len(values) == 0) || (values == nil) {
-		return 0
-	}
-	var sum int64 = 0
-	for _, value := range values {
-		sum += value
+// hasDuplicate сообщает, встречается ли какое-либо значение повторно.
+func hasDuplicate(nums []int) bool {
+	// TODO: проверить наличие повторов.
+	m := make(map[int]int) //[key]value
+
+	for _, num := range nums {
+		_, ok := m[num]
+		if ok == true {
+			return true
+		}
+		m[num] = 1
 	}
 
-	return float64(sum) / float64(len(values))
+	return false
 }
 
-// Category возвращает invalid, small, regular или large по сумме в копейках.
-func Category(amount int64) string {
-	// TODO: Проверить границы через switch без выражения.
-	switch {
-	case 0 <= amount && amount <= 9999:
-		return "small"
-	case 10000 <= amount && amount <= 49999:
-		return "regular"
-	case 50000 <= amount:
-		return "large"
-	default:
-		return "invalid"
+// compactSorted создаёт независимый слайс уникальных значений.
+func compactSorted(nums []int) []int {
+	// TODO: сохранить порядок и не изменять исходный слайс.
+	if len(nums) == 0 {
+		return []int{}
 	}
+	ans := make([]int, 1, len(nums))
+	ans[0] = nums[0]
+	ans_len := 0
+	for _, vl := range nums {
+		if ans[ans_len] != vl {
+			ans = append(ans, vl)
+			ans_len++
+		}
+	}
+	return ans
 }
 
-// RuneCount считает кодовые точки Unicode в строке через range.
-func RuneCount(text string) int {
-	// TODO: Не использовать len(text) как количество кодовых точек.
-	var count int = 0
-	for range text {
-		count++
+// balancedBrackets проверяет пары и порядок закрытия скобок.
+func balancedBrackets(text string) bool {
+	// TODO: обработать строку из символов ()[]{}.
+	if len(text) == 0 {
+		return true
 	}
+	m := make(map[rune]rune)
+	m[')'] = '('
+	m['}'] = '{'
+	m[']'] = '['
+	s1 := []rune(text)
+	stack := make([]rune, 0, len(text))
+	for _, sym := range s1 {
+		if strings.Contains("([{", string(sym)) {
+			stack = append(stack, sym)
+			continue
+		}
+		pair := m[sym]
+		if len(stack) == 0 || stack[len(stack)-1] != pair {
+			return false
+		}
+		stack = stack[:len(stack)-1]
 
-	return count
+	}
+	if len(stack) != 0 {
+		return false
+	}
+	return true
 }

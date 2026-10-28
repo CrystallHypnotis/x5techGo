@@ -1,3 +1,3 @@
-module example.com/lesson2
+module example.com/lesson3
 
 go 1.22
