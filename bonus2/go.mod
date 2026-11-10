@@ -1,3 +1,3 @@
-module example.com/sales-analytics
+module example.com/delivery
 
 go 1.22
