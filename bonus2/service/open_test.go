@@ -12,15 +12,37 @@ import (
 func TestCalculatorCourier(t *testing.T) {
 	calculator := service.NewCalculator(repository.Default())
 	order := model.Order{ID: "order-1", Tariff: "courier", WeightGrams: 2_500, DistanceKM: 10}
-
 	got, err := calculator.Calculate(order)
 	if err != nil {
 		t.Fatalf("Calculate() error = %v", err)
 	}
-	const want int64 = 50_000
-	if got != want {
-		t.Fatalf("Calculate() = %d, want %d", got, want)
+	var expected int64 = 50_000
+	if got != expected {
+		t.Fatalf("Calculate() = %d, want %d", got, expected)
 	}
+
+	order = model.Order{ID: "order-1", Tariff: "courier", WeightGrams: 2_500, DistanceKM: service.NewCourier().MaxDistanceKM}
+	got, err = calculator.Calculate(order)
+	expected = 185000
+
+	if err != nil {
+		t.Fatalf("Calculate() error = %v", err)
+	}
+	if got != expected {
+		t.Fatalf("Calculate() = %d, want %d", got, expected)
+	}
+
+	order = model.Order{ID: "order-1", Tariff: "courier", WeightGrams: 2_500, DistanceKM: service.NewCourier().MaxDistanceKM + 1}
+	got, err = calculator.Calculate(order)
+	expected = 0
+
+	if !errors.Is(err, service.ErrDistanceTooLarge) {
+		t.Fatalf("Calculate() error = %v", err)
+	}
+	if got != expected {
+		t.Fatalf("Calculate() = %d, want %d", got, expected)
+	}
+
 }
 
 func TestCalculatorUnknownTariff(t *testing.T) {

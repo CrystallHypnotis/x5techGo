@@ -18,7 +18,7 @@ func (b BaseTariff) validate(weightGrams, distanceKM int) error {
 	if distanceKM <= 0 {
 		return ErrInvalidDistance
 	}
-	if distanceKM >= b.MaxDistanceKM {
+	if distanceKM > b.MaxDistanceKM {
 		return ErrDistanceTooLarge
 	}
 	return nil
