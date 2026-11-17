@@ -15,13 +15,23 @@ var statusTransitions = map[order.Status][]order.Status{
 	order.StatusProcessing: {order.StatusCompleted, order.StatusCancelled},
 }
 
-func checkOrderStatusTransition(target order.Order, status order.Status) bool {
+var validStatuses = []order.Status{
+	order.StatusNew,
+	order.StatusProcessing,
+	order.StatusCompleted,
+	order.StatusCancelled,
+}
+
+func checkOrderStatusTransition(target order.Order, status order.Status) error {
+	if !slices.Contains(validStatuses, status) {
+		return order.ErrInvalidStatus
+	}
 	allowed, ok := statusTransitions[target.Status]
-	if !ok {
-		return false
+	if !ok || !slices.Contains(allowed, status) {
+		return order.ErrInvalidStatusTransition
 	}
 
-	return slices.Contains(allowed, status)
+	return nil
 }
 
 func validateCreateOrderInput(input order.CreateOrderInput) error {
@@ -112,8 +122,8 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id int64, status order.
 		return order.Order{}, err
 	}
 
-	if allowed := checkOrderStatusTransition(oldOrder, status); allowed == false {
-		return order.Order{}, order.ErrInvalidStatusTransition
+	if err := checkOrderStatusTransition(oldOrder, status); err != nil {
+		return order.Order{}, err
 	}
 
 	oldOrder.Status = status

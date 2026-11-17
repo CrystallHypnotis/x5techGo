@@ -30,8 +30,8 @@ type Handler struct {
 func NewRouter(service OrderService, logger *slog.Logger) http.Handler {
 	h := &Handler{service: service, logger: logger}
 	router := chi.NewRouter()
-	router.Use(recoveryMiddleware(logger))
 	router.Use(requestLoggingMiddleware(logger))
+	router.Use(recoveryMiddleware(logger))
 
 	router.Get("/health", h.health)
 	router.Route("/api/v1/orders", func(r chi.Router) {
